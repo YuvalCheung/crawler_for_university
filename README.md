@@ -74,3 +74,8 @@ def get_job(university):
             else:
                 os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % (duration / 1000, freq))
 ```
+# 使用方法
+下载main文件，安装所需要的库，在命令行下面代码进行运行
+```
+python main.py
+```
