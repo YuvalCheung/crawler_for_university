@@ -1,25 +1,23 @@
-import wxpy
-import requests
-import time
-from bs4 import BeautifulSoup
-import platform
-import random
+# crawler_for_university
+用python爬取江苏几大高校的就业网站，并提供3种方式通知给用户，分别是通过微信发送、命令行直接输出、windows气泡通知。
+===========================
 
-flag = False
-if platform.system() == 'Windows':
-    import windows
-    import winsound
+# 环境依赖
+wxpy,requests,bs4等库
 
-    duration = 500  # millisecond
-    freq = 440  # Hz
-    message = windows.TestTaskbarIcon()
-    flag = True
-else:
-    import os
+# 功能描述
+该项目基于python，通过爬虫爬各高校的就业信息网，爬取招聘信息并存储，如果碰到新的信息，则输出，提供3种输出方式：
+## 微信发送消息
+微信发消息基于网页版微信实现，使用wxpy库，使用该库的同时，不能使用电脑版或pad版微信，否则会挤下线。
+并非所有用户都能使用该功能，查询自己能否使用该功能，需要打开<https://wx.qq.com/>。检测能否扫码登录，如果可以，则能使用。
+## 直接命令行输出
+如果不能使用，可以直接命令行输出爬取后的信息。
+## windows下利用气泡通知
+windows下提供操作中心显示通知，可以在windows的操作中心查看消息。
 
-    print('该系统不支持气泡通知!')
-
-
+## 重要代码描述
+该函数用以爬取url的信息
+```Python
 def get_url(url, kv):
     '''
     用以爬取网站内容的函数
@@ -39,8 +37,10 @@ def get_url(url, kv):
             return r
         except:
             return 0
+```
 
-
+该函数输入大学简称，对网页内容进行爬取，筛选，然后发送通知。
+```Python
 def get_job(university):
     '''
     用来获取各大学的就业信息网的内容
@@ -52,7 +52,6 @@ def get_job(university):
     r = get_url(url=job_url, kv={'User-Agent': 'Mozilla/5.0'})
     soup = BeautifulSoup(r.text, 'lxml')
     r_soup = soup.find_all(attrs={'class': 'infoList'})  # 解析网页找到对应的内容
-
     for i in r_soup:  # 遍历每个结果
         temp = i.find(attrs={'class': 'span7'}).find(name='a').get('href')  # 找到通知对应的网站
         url = job_url + temp[7:]  # 生成招聘信息对应的网站
@@ -74,45 +73,4 @@ def get_job(university):
                 winsound.Beep(freq, duration)
             else:
                 os.system('play --no-show-progress --null --channels 1 synth %s sine %f' % (duration / 1000, freq))
-
-
-if __name__ == '__main__':
-
-    model_choose = [1, 2, 3]  # 通知方式选择，通知方式1为直接print输出，通知方式2为发送微信消息到指定目标，通知方式3为Windows下的气泡通知。
-
-    # 仅支持使用就业网站http://xxxx.91job.org.cn/格式的大学，其中xxxx为大学简称
-    university_list = {'seu': '东南大学',
-                       'nuaa': '南京航空航天大学',
-                       'njust': '南京理工大学',
-                       'njupt': '南京邮电大学',
-                       'nuist': '南京信息工程大学',
-                       'njtech': '南京工业大学',
-                       'hhu': '河海大学',
-                       'njfu': '南京林业大学',
-                       'njau': '南京农业大学',
-                       'njmu': '南京医科大学',
-                       'njucm': '南京中医药科大学',
-                       'njnu': '南京师范大学',
-                       'njue': '南京财经大学'}
-
-    # 读取url_list
-    url_list = []
-    with open("url_list.txt", "r") as f:  # 打开文件
-        data = f.readlines()  # 读取文件
-        for i in data:
-            url_list.append(i.strip('\n'))
-
-    # 构建微信机器人
-    bot = wxpy.Bot(cache_path=True, console_qr=False)
-    bot.enable_puid()
-
-    # send_target = bot.file_helper  # 发送目标为文件传输助手
-    send_target = bot.self  # 发送目标设定为自己
-    # send_target = bot.friends().search(name='张张张')[0]  # 搜索微信好友名称为'张张张'的好友
-    # send_target = bot.friends().search(puid='664612a6')[0]
-    # 搜索微信好友puid为'664612a6'的用户，该模块具体使用方法参考https://wxpy.readthedocs.io/zh/latest/chats.html#id5
-
-    while True:  # 循环爬学校
-        for university_english, university_chinese in university_list.items():
-            get_job(university_english)
-            time.sleep(random.random() * 30 + 20)  # 随机休息20~50s，再访问下一个学校。
+```
